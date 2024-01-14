@@ -17,3 +17,15 @@ main =
         , update = update
         , subscriptions = subscriptions
         }
+
+-- MODEL
+
+type alias Model =
+    { jsonResult : String
+    }
+
+init : () -> ( Model, Cmd Msg )
+init _ =
+    ( { jsonResult = "" }
+    , Cmd.none
+    )
