@@ -55,3 +55,12 @@ update msg model =
                     ( { model | jsonResult = "Could not decode JSON from the file." }
                     , Cmd.none
                     )
+
+-- VIEW
+
+view : Model -> Html Msg
+view model =
+    div []
+        [ button [ onClick (FileSelected "") ] [ text "Select CSV File" ]
+        , div [] [ pre [] [ text model.jsonResult ] ]
+        ]
