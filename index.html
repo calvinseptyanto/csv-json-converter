@@ -14,7 +14,26 @@
         node: document.getElementById("elm"),
       });
 
-      // JavaScript to interface with Elm will go here
+      // Get the file input element
+      var fileInput = document.getElementById("fileInput");
+
+      fileInput.addEventListener("change", function () {
+        var file = fileInput.files[0];
+        var reader = new FileReader();
+
+        reader.onload = function (e) {
+          var csvContent = e.target.result;
+          // Once the file is read, send the content to Elm
+          app.ports.checkFile.send(csvContent);
+        };
+
+        reader.readAsText(file);
+      });
+
+      app.ports.convertComplete.subscribe(function (json) {
+        // Handle JSON data here (e.g., display it or allow the user to save it)
+        console.log("Received JSON from Elm: ", json);
+      });
     </script>
   </body>
 </html>
