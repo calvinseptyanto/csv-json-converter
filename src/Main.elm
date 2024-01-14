@@ -64,3 +64,16 @@ view model =
         [ button [ onClick (FileSelected "") ] [ text "Select CSV File" ]
         , div [] [ pre [] [ text model.jsonResult ] ]
         ]
+
+-- SUBSCRIPTIONS
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    convertComplete FileRead
+
+
+-- PORTS
+
+port checkFile : String -> Cmd msg
+
+port convertComplete : (Result Decode.Error Encode.Value -> msg) -> Sub msg
