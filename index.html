@@ -26,18 +26,19 @@
         var downloadJsonBtn = document.getElementById("downloadJsonBtn");
         var jsonData = null; // Store the JSON data
 
+        // Event listener for file input
         fileInput.addEventListener("change", function () {
           var file = fileInput.files[0];
           var reader = new FileReader();
 
           reader.onload = function (e) {
             var csvContent = e.target.result;
-            // Use PapaParse to convert CSV to JSON
-            jsonData = JSON.stringify(convertCSVtoJSON(csvContent));
-            // Send the JSON string data to Elm, if you have a port set up for this
+            // Parse CSV content to JSON
+            jsonData = JSON.stringify(convertCSVtoJSON(csvContent)); // jsonData now contains JSON array
+            // Send the JSON string data to Elm if needed
             // app.ports.convertComplete.send(jsonData);
             // Show the download button
-            downloadJsonBtn.style.display = "inline"; // Use inline instead of block to keep the button's original display style
+            downloadJsonBtn.style.display = "inline";
           };
 
           reader.readAsText(file);
@@ -65,18 +66,14 @@
 
         // Function to convert CSV to JSON
         function convertCSVtoJSON(csvContent) {
-          return Papa.parse(csvContent, {
+          // Parse the CSV content
+          var results = Papa.parse(csvContent, {
             header: true,
             skipEmptyLines: true,
             dynamicTyping: true,
-            complete: function (results) {
-              jsonData = JSON.stringify(results.data);
-              // Send the JSON string data to Elm, if you have a port set up for this
-              // app.ports.convertComplete.send(jsonData);
-              // Show the download button
-              downloadJsonBtn.style.display = "inline"; // Use inline instead of block to keep the button's original display style
-            },
           });
+          // No need to wrap in an object, just return the array
+          return results.data;
         }
       };
     </script>
