@@ -7,7 +7,6 @@ import Html.Events exposing (onClick)
 import Json.Decode as Decode
 import Json.Encode as Encode
 
-
 -- MAIN
 
 main =
@@ -34,7 +33,7 @@ init _ =
 
 type Msg
     = FileSelected String
-    | FileRead (Result Decode.Error Encode.Value)
+    | FileRead String -- Changed to String to receive raw JSON
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -44,15 +43,16 @@ update msg model =
             , checkFile content
             )
 
-        FileRead result ->
-            case result of
+        FileRead jsonString ->
+            -- Decode jsonString inside Elm now
+            case Decode.decodeString Decode.value jsonString of
                 Ok value ->
                     ( { model | jsonResult = Encode.encode 2 value }
                     , Cmd.none
                     )
 
-                Err _ ->
-                    ( { model | jsonResult = "Could not decode JSON from the file." }
+                Err error ->
+                    ( { model | jsonResult = "Could not decode JSON from the file: " ++ Decode.errorToString error }
                     , Cmd.none
                     )
 
@@ -61,19 +61,18 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div []
-        [ button [ onClick (FileSelected "") ] [ text "Select CSV File" ]
+        [ button [ onClick (FileSelected "") ] [ text "Click to select a CSV file." ]
         , div [] [ pre [] [ text model.jsonResult ] ]
         ]
 
 -- SUBSCRIPTIONS
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
+subscriptions _ =
     convertComplete FileRead
-
 
 -- PORTS
 
 port checkFile : String -> Cmd msg
 
-port convertComplete : (Result Decode.Error Encode.Value -> msg) -> Sub msg
+port convertComplete : (String -> msg) -> Sub msg
