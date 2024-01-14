@@ -29,3 +29,29 @@ init _ =
     ( { jsonResult = "" }
     , Cmd.none
     )
+
+-- UPDATE
+
+type Msg
+    = FileSelected String
+    | FileRead (Result Decode.Error Encode.Value)
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        FileSelected content ->
+            ( model
+            , checkFile content
+            )
+
+        FileRead result ->
+            case result of
+                Ok value ->
+                    ( { model | jsonResult = Encode.encode 2 value }
+                    , Cmd.none
+                    )
+
+                Err _ ->
+                    ( { model | jsonResult = "Could not decode JSON from the file." }
+                    , Cmd.none
+                    )
