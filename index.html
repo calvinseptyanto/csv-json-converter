@@ -3,28 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <title>CSV to JSON Converter</title>
-    <!-- Elm runtime -->
     <script src="elm.js" defer></script>
   </head>
   <body>
     <input type="file" id="fileInput" />
-    <button id="downloadJsonBtn" style="display: none">Download JSON</button>
     <div id="elm"></div>
+    <!-- Elm will render here -->
     <!-- PapaParse for CSV parsing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-    <!-- Your app's JavaScript; no defer attribute needed since this is at the end of the body -->
     <script>
       var app;
 
-      // Ensure Elm is defined before initializing
       window.onload = function () {
         app = Elm.Main.init({
           node: document.getElementById("elm"),
         });
 
         var fileInput = document.getElementById("fileInput");
-        var downloadJsonBtn = document.getElementById("downloadJsonBtn");
-        var jsonData = null; // Store the JSON data
 
         // Event listener for file input
         fileInput.addEventListener("change", function () {
@@ -32,50 +27,106 @@
           var reader = new FileReader();
 
           reader.onload = function (e) {
-            var csvContent = e.target.result;
-            // Parse CSV content to JSON
-            jsonData = JSON.stringify(convertCSVtoJSON(csvContent)); // jsonData now contains JSON array
-            // Send the JSON string data to Elm if needed
-            // app.ports.convertComplete.send(jsonData);
-            // Show the download button
-            downloadJsonBtn.style.display = "inline";
+            var content = e.target.result;
+
+            // Send the raw CSV content to Elm through the port
+            app.ports.rawContentReceived.send(content);
+
+            // // Convert CSV to JSON
+            // var jsonData = JSON.stringify(convertCSVtoJSON(content));
+
+            // // Directly insert JSON content into the JSON placeholder <div>
+            // document.getElementById("json-content").textContent = jsonData;
+            // Convert CSV to JSON and encode with indentation for prettier formatting
+            var jsonData = JSON.stringify(convertCSVtoJSON(content), null, 2);
+            // Send the properly formatted JSON data to Elm
+            app.ports.jsonContentReceived.send(jsonData);
+
+            // Convert CSV content to an HTML table
+            var csvTableHtml = csvToTable(content);
+
+            // Directly insert HTML table into the CSV placeholder <div>
+            document.getElementById("csv-content").innerHTML = csvTableHtml;
           };
 
           reader.readAsText(file);
         });
 
-        downloadJsonBtn.addEventListener("click", function () {
-          if (jsonData) {
-            // Trigger file download
-            downloadJson("data.json", jsonData);
-          }
-        });
-
-        // Function that prepares the data and triggers the download
-        function downloadJson(filename, text) {
+        // Subscribe to request download JSON from Elm
+        app.ports.downloadJson.subscribe(function (jsonString) {
+          var filename = "data.json";
           var element = document.createElement("a");
           element.setAttribute(
             "href",
-            "data:text/plain;charset=utf-8," + encodeURIComponent(text)
+            "data:application/json;charset=utf-8," +
+              encodeURIComponent(jsonString)
           );
           element.setAttribute("download", filename);
           document.body.appendChild(element);
           element.click();
           document.body.removeChild(element);
-        }
-
-        // Function to convert CSV to JSON
-        function convertCSVtoJSON(csvContent) {
-          // Parse the CSV content
-          var results = Papa.parse(csvContent, {
-            header: true,
-            skipEmptyLines: true,
-            dynamicTyping: true,
-          });
-          // No need to wrap in an object, just return the array
-          return results.data;
-        }
+        });
       };
+
+      // Function to convert CSV to JSON
+      function convertCSVtoJSON(csvContent) {
+        var results = Papa.parse(csvContent, {
+          header: true,
+          skipEmptyLines: true,
+          dynamicTyping: true,
+        });
+        return results.data; // Array of objects
+      }
+
+      // Implement this function to generate the displayable CSV content
+      function convertToParsedCsv(csvContent) {
+        // Assume conversion has been done, use PapaParse or another method
+        return csvToTable(csvContent); // Needs implementation based on desired CSV format
+      }
+
+      // Convert CSV data to a table format or other displayable format
+      function csvToTable(csvContent) {
+        // Parse the CSV content into an array of objects using PapaParse
+        var parsedCsv = Papa.parse(csvContent.trim(), {
+          header: true,
+          dynamicTyping: true,
+          skipEmptyLines: true,
+        }).data;
+
+        // Create a table element
+        var table = document.createElement("table");
+        table.style.width = "100%";
+        table.setAttribute("border", "1");
+
+        // Generate the table head
+        var thead = document.createElement("thead");
+        var headerRow = document.createElement("tr");
+        if (parsedCsv.length > 0) {
+          Object.keys(parsedCsv[0]).forEach(function (header) {
+            var th = document.createElement("th");
+            th.appendChild(document.createTextNode(header));
+            headerRow.appendChild(th);
+          });
+        }
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        // Generate the table body
+        var tbody = document.createElement("tbody");
+        parsedCsv.forEach(function (row) {
+          var tr = document.createElement("tr");
+          Object.values(row).forEach(function (value) {
+            var td = document.createElement("td");
+            td.appendChild(document.createTextNode(value));
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+
+        // Return the table's outer HTML as a string
+        return table.outerHTML;
+      }
     </script>
   </body>
 </html>

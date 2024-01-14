@@ -5163,57 +5163,206 @@ var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $author$project$Main$init = function (_v0) {
 	return _Utils_Tuple2(
-		{jsonResult: ''},
+		{jsonResult: '', parsedCsv: '', rawLines: _List_Nil},
 		$elm$core$Platform$Cmd$none);
 };
-var $author$project$Main$FileRead = function (a) {
-	return {$: 'FileRead', a: a};
+var $author$project$Main$ReceiveJsonResult = function (a) {
+	return {$: 'ReceiveJsonResult', a: a};
 };
+var $author$project$Main$ReceiveParsedCsv = function (a) {
+	return {$: 'ReceiveParsedCsv', a: a};
+};
+var $author$project$Main$ReceiveRawContent = function (a) {
+	return {$: 'ReceiveRawContent', a: a};
+};
+var $elm$core$Platform$Sub$batch = _Platform_batch;
 var $elm$json$Json$Decode$string = _Json_decodeString;
-var $author$project$Main$convertComplete = _Platform_incomingPort('convertComplete', $elm$json$Json$Decode$string);
+var $author$project$Main$jsonContentReceived = _Platform_incomingPort('jsonContentReceived', $elm$json$Json$Decode$string);
+var $author$project$Main$parsedCsvContentReceived = _Platform_incomingPort('parsedCsvContentReceived', $elm$json$Json$Decode$string);
+var $author$project$Main$rawContentReceived = _Platform_incomingPort('rawContentReceived', $elm$json$Json$Decode$string);
 var $author$project$Main$subscriptions = function (_v0) {
-	return $author$project$Main$convertComplete($author$project$Main$FileRead);
+	return $elm$core$Platform$Sub$batch(
+		_List_fromArray(
+			[
+				$author$project$Main$rawContentReceived($author$project$Main$ReceiveRawContent),
+				$author$project$Main$parsedCsvContentReceived($author$project$Main$ReceiveParsedCsv),
+				$author$project$Main$jsonContentReceived($author$project$Main$ReceiveJsonResult)
+			]));
 };
+var $author$project$Main$downloadJson = _Platform_outgoingPort('downloadJson', $elm$core$Basics$identity);
 var $elm$json$Json$Encode$string = _Json_wrap;
-var $author$project$Main$checkFile = _Platform_outgoingPort('checkFile', $elm$json$Json$Encode$string);
-var $elm$json$Json$Decode$decodeString = _Json_runOnString;
-var $elm$json$Json$Decode$value = _Json_decodeValue;
-var $author$project$Main$update = F2(
-	function (msg, model) {
-		if (msg.$ === 'FileSelected') {
-			var content = msg.a;
-			return _Utils_Tuple2(
-				model,
-				$author$project$Main$checkFile(content));
-		} else {
-			var jsonString = msg.a;
-			var _v1 = A2($elm$json$Json$Decode$decodeString, $elm$json$Json$Decode$value, jsonString);
-			if (_v1.$ === 'Ok') {
-				var value = _v1.a;
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{
-							jsonResult: A2($elm$json$Json$Encode$encode, 2, value)
-						}),
-					$elm$core$Platform$Cmd$none);
+var $elm$core$List$takeReverse = F3(
+	function (n, list, kept) {
+		takeReverse:
+		while (true) {
+			if (n <= 0) {
+				return kept;
 			} else {
-				var error = _v1.a;
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{
-							jsonResult: 'Could not decode JSON from the file: ' + $elm$json$Json$Decode$errorToString(error)
-						}),
-					$elm$core$Platform$Cmd$none);
+				if (!list.b) {
+					return kept;
+				} else {
+					var x = list.a;
+					var xs = list.b;
+					var $temp$n = n - 1,
+						$temp$list = xs,
+						$temp$kept = A2($elm$core$List$cons, x, kept);
+					n = $temp$n;
+					list = $temp$list;
+					kept = $temp$kept;
+					continue takeReverse;
+				}
 			}
 		}
 	});
-var $author$project$Main$FileSelected = function (a) {
-	return {$: 'FileSelected', a: a};
-};
+var $elm$core$List$takeTailRec = F2(
+	function (n, list) {
+		return $elm$core$List$reverse(
+			A3($elm$core$List$takeReverse, n, list, _List_Nil));
+	});
+var $elm$core$List$takeFast = F3(
+	function (ctr, n, list) {
+		if (n <= 0) {
+			return _List_Nil;
+		} else {
+			var _v0 = _Utils_Tuple2(n, list);
+			_v0$1:
+			while (true) {
+				_v0$5:
+				while (true) {
+					if (!_v0.b.b) {
+						return list;
+					} else {
+						if (_v0.b.b.b) {
+							switch (_v0.a) {
+								case 1:
+									break _v0$1;
+								case 2:
+									var _v2 = _v0.b;
+									var x = _v2.a;
+									var _v3 = _v2.b;
+									var y = _v3.a;
+									return _List_fromArray(
+										[x, y]);
+								case 3:
+									if (_v0.b.b.b.b) {
+										var _v4 = _v0.b;
+										var x = _v4.a;
+										var _v5 = _v4.b;
+										var y = _v5.a;
+										var _v6 = _v5.b;
+										var z = _v6.a;
+										return _List_fromArray(
+											[x, y, z]);
+									} else {
+										break _v0$5;
+									}
+								default:
+									if (_v0.b.b.b.b && _v0.b.b.b.b.b) {
+										var _v7 = _v0.b;
+										var x = _v7.a;
+										var _v8 = _v7.b;
+										var y = _v8.a;
+										var _v9 = _v8.b;
+										var z = _v9.a;
+										var _v10 = _v9.b;
+										var w = _v10.a;
+										var tl = _v10.b;
+										return (ctr > 1000) ? A2(
+											$elm$core$List$cons,
+											x,
+											A2(
+												$elm$core$List$cons,
+												y,
+												A2(
+													$elm$core$List$cons,
+													z,
+													A2(
+														$elm$core$List$cons,
+														w,
+														A2($elm$core$List$takeTailRec, n - 4, tl))))) : A2(
+											$elm$core$List$cons,
+											x,
+											A2(
+												$elm$core$List$cons,
+												y,
+												A2(
+													$elm$core$List$cons,
+													z,
+													A2(
+														$elm$core$List$cons,
+														w,
+														A3($elm$core$List$takeFast, ctr + 1, n - 4, tl)))));
+									} else {
+										break _v0$5;
+									}
+							}
+						} else {
+							if (_v0.a === 1) {
+								break _v0$1;
+							} else {
+								break _v0$5;
+							}
+						}
+					}
+				}
+				return list;
+			}
+			var _v1 = _v0.b;
+			var x = _v1.a;
+			return _List_fromArray(
+				[x]);
+		}
+	});
+var $elm$core$List$take = F2(
+	function (n, list) {
+		return A3($elm$core$List$takeFast, 0, n, list);
+	});
+var $author$project$Main$update = F2(
+	function (msg, model) {
+		switch (msg.$) {
+			case 'ReceiveRawContent':
+				var content = msg.a;
+				var lines = A2(
+					$elm$core$List$take,
+					10,
+					A2($elm$core$String$split, '\n', content));
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{rawLines: lines}),
+					$elm$core$Platform$Cmd$none);
+			case 'ReceiveParsedCsv':
+				var csvHtml = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{parsedCsv: csvHtml}),
+					$elm$core$Platform$Cmd$none);
+			case 'ReceiveJsonResult':
+				var content = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{jsonResult: content}),
+					$elm$core$Platform$Cmd$none);
+			default:
+				return _Utils_Tuple2(
+					model,
+					$author$project$Main$downloadJson(
+						$elm$json$Json$Encode$string(model.jsonResult)));
+		}
+	});
+var $author$project$Main$RequestDownloadJson = {$: 'RequestDownloadJson'};
 var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$html$Html$div = _VirtualDom_node('div');
+var $elm$html$Html$Attributes$stringProperty = F2(
+	function (key, string) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			$elm$json$Json$Encode$string(string));
+	});
+var $elm$html$Html$Attributes$id = $elm$html$Html$Attributes$stringProperty('id');
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 'Normal', a: a};
 };
@@ -5232,6 +5381,8 @@ var $elm$html$Html$Events$onClick = function (msg) {
 		$elm$json$Json$Decode$succeed(msg));
 };
 var $elm$html$Html$pre = _VirtualDom_node('pre');
+var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
+var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $author$project$Main$view = function (model) {
@@ -5241,28 +5392,113 @@ var $author$project$Main$view = function (model) {
 		_List_fromArray(
 			[
 				A2(
-				$elm$html$Html$button,
+				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						$elm$html$Html$Events$onClick(
-						$author$project$Main$FileSelected(''))
+						A2($elm$html$Html$Attributes$style, 'height', '200px'),
+						A2($elm$html$Html$Attributes$style, 'overflow', 'auto'),
+						A2($elm$html$Html$Attributes$style, 'border', '1px solid #ccc'),
+						A2($elm$html$Html$Attributes$style, 'padding', '8px')
 					]),
 				_List_fromArray(
 					[
-						$elm$html$Html$text('Click to select a CSV file.')
-					])),
-				A2(
-				$elm$html$Html$div,
-				_List_Nil,
-				_List_fromArray(
-					[
+						A2(
+						$elm$html$Html$div,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text('First Ten Lines of Raw Input:')
+							])),
 						A2(
 						$elm$html$Html$pre,
 						_List_Nil,
 						_List_fromArray(
 							[
-								$elm$html$Html$text(model.jsonResult)
+								$elm$html$Html$text(
+								A2(
+									$elm$core$String$join,
+									'\n',
+									A2($elm$core$List$take, 10, model.rawLines)))
 							]))
+					])),
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'display', 'flex')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'flex', '1'),
+								A2($elm$html$Html$Attributes$style, 'height', '200px'),
+								A2($elm$html$Html$Attributes$style, 'overflow', 'auto'),
+								A2($elm$html$Html$Attributes$style, 'border', '1px solid #ccc'),
+								A2($elm$html$Html$Attributes$style, 'padding', '8px'),
+								A2($elm$html$Html$Attributes$style, 'margin-right', '8px')
+							]),
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$div,
+								_List_Nil,
+								_List_fromArray(
+									[
+										$elm$html$Html$text('Parsed CSV:')
+									])),
+								A2(
+								$elm$html$Html$div,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$id('csv-content')
+									]),
+								_List_Nil)
+							])),
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'flex', '1'),
+								A2($elm$html$Html$Attributes$style, 'height', '200px'),
+								A2($elm$html$Html$Attributes$style, 'overflow', 'auto'),
+								A2($elm$html$Html$Attributes$style, 'border', '1px solid #ccc'),
+								A2($elm$html$Html$Attributes$style, 'padding', '8px')
+							]),
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$div,
+								_List_Nil,
+								_List_fromArray(
+									[
+										$elm$html$Html$text('JSON Output:')
+									])),
+								A2(
+								$elm$html$Html$pre,
+								_List_Nil,
+								_List_fromArray(
+									[
+										$elm$html$Html$text(model.jsonResult)
+									]))
+							]))
+					])),
+				A2(
+				$elm$html$Html$button,
+				_List_fromArray(
+					[
+						$elm$html$Html$Events$onClick($author$project$Main$RequestDownloadJson),
+						A2(
+						$elm$html$Html$Attributes$style,
+						'display',
+						(model.jsonResult === '') ? 'none' : 'inline-block'),
+						A2($elm$html$Html$Attributes$style, 'margin-top', '16px')
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Download JSON')
 					]))
 			]));
 };

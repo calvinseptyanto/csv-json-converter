@@ -1,10 +1,9 @@
 port module Main exposing (..)
 
 import Browser
-import Html exposing (Html, div, pre, text, input, button)
-import Html.Attributes exposing (type_, style)
-import Html.Events exposing (onInput, onClick)
-import Json.Decode as Decode
+import Html exposing (Html, div, pre, text, button)
+import Html.Attributes exposing (style, id)
+import Html.Events exposing (onClick)
 import Json.Encode as Encode
 
 -- MAIN
@@ -35,67 +34,89 @@ init _ =
     , Cmd.none
     )
 
--- UPDATE
+-- MESSAGES
 
 type Msg
-    = SetRawLines (List String)
-    | SetParsedCsv String
-    | SetJsonResult String
+    = ReceiveRawContent String
+    | ReceiveParsedCsv String
+    | ReceiveJsonResult String
+    | RequestDownloadJson
 
--- Define how the model should be updated in response to messages
+-- UPDATE
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        SetRawLines lines ->
+        ReceiveRawContent content ->
+            let
+                lines = List.take 10 (String.split "\n" content)
+            in
             ( { model | rawLines = lines }
             , Cmd.none
             )
 
-        SetParsedCsv csv ->
-            ( { model | parsedCsv = csv }
-            , Cmd.none
+        ReceiveParsedCsv csvHtml ->  -- Use 'csvHtml', not 'content'
+            ( { model | parsedCsv = csvHtml }, Cmd.none )
+
+        ReceiveJsonResult content ->
+            ( { model | jsonResult = content }, Cmd.none )
+
+        RequestDownloadJson ->
+            ( model
+            , downloadJson (Encode.string model.jsonResult)
             )
 
-        SetJsonResult json ->
-            ( { model | jsonResult = json }
-            , Cmd.none
-            )
-
--- VIEW
-
--- Define how to render the model as HTML
 view : Model -> Html Msg
 view model =
     div []
-        [ div [] [ text "First Ten Lines of Raw Input:" ]
-        , pre [] [ text (String.join "\n" (List.take 10 model.rawLines)) ]
-        , div [] [ text "Parsed CSV:" ]
-        , pre [] [ text model.parsedCsv ]
-        , div [] [ text "JSON Output:" ]
-        , pre [] [ text model.jsonResult ]
-        , input [ type_ "file", onInput (SetRawLines []), style [ ( "display", "none" ) ] ] []
-        , button [ onClick (SetJsonResult "") ] [ text "Download JSON" ]
+        [ div [ style "height" "200px"
+              , style "overflow" "auto"
+              , style "border" "1px solid #ccc"
+              , style "padding" "8px"
+              ]
+            [ div [] [ text "First Ten Lines of Raw Input:" ]
+            , pre [] [ text (String.join "\n" (List.take 10 model.rawLines)) ]
+            ]
+        , div [ style "display" "flex" ]
+            [ div [ style "flex" "1"
+                  , style "height" "200px"
+                  , style "overflow" "auto"
+                  , style "border" "1px solid #ccc"
+                  , style "padding" "8px"
+                  , style "margin-right" "8px"
+                  ]
+                [ div [] [ text "Parsed CSV:" ]
+                , div [ id "csv-content" ] [] -- Placeholder for the CSV content
+                ]
+            , div [ style "flex" "1"
+                  , style "height" "200px"
+                  , style "overflow" "auto"
+                  , style "border" "1px solid #ccc"
+                  , style "padding" "8px"
+                  ]
+                [ div [] [ text "JSON Output:" ]
+                , pre [] [ text model.jsonResult ] -- JSON is displayed with `pre` for formatting
+                ]
+            ]
+        , button [ onClick RequestDownloadJson
+                 , style "display" (if model.jsonResult == "" then "none" else "inline-block")
+                 , style "margin-top" "16px"
+                 ] [ text "Download JSON" ]
         ]
-        
+
 -- SUBSCRIPTIONS
 
--- Define subscriptions for your app (none in this case)
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Sub.none
+    Sub.batch
+        [ rawContentReceived ReceiveRawContent
+        , parsedCsvContentReceived ReceiveParsedCsv
+        , jsonContentReceived ReceiveJsonResult
+        ]
 
 -- PORTS
 
--- Define outbound ports to send data out of Elm
-port checkFile : List String -> Cmd msg
-
-port parseCsv : String -> Cmd msg
-
+port rawContentReceived : (String -> msg) -> Sub msg
+port parsedCsvContentReceived : (String -> msg) -> Sub msg
+port jsonContentReceived : (String -> msg) -> Sub msg
 port downloadJson : Encode.Value -> Cmd msg
-
--- HELPER FUNCTIONS
-
--- A helper function to convert JSON values to a formatted string
-convertJsonToString : Encode.Value -> String
-convertJsonToString jsonValue =
-    Encode.encode 2 jsonValue
