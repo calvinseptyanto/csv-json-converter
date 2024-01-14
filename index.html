@@ -23,8 +23,18 @@
 
         reader.onload = function (e) {
           var csvContent = e.target.result;
-          // Once the file is read, send the content to Elm
-          app.ports.checkFile.send(csvContent);
+          var rows = csvContent.split(/\r\n|\n/);
+          var jsonArray = rows.map(function (row) {
+            var columns = row.split(",");
+            var obj = {};
+            columns.forEach(function (column, index) {
+              obj["field" + index] = column;
+            });
+            return obj;
+          });
+
+          // Send the JSON data to Elm
+          app.ports.convertComplete.send(jsonArray);
         };
 
         reader.readAsText(file);
