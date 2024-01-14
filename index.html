@@ -3,47 +3,82 @@
   <head>
     <meta charset="UTF-8" />
     <title>CSV to JSON Converter</title>
-    <script src="elm.js"></script>
-    <!-- Will be created by compiling Elm -->
+    <!-- Elm runtime -->
+    <script src="elm.js" defer></script>
   </head>
   <body>
     <input type="file" id="fileInput" />
+    <button id="downloadJsonBtn" style="display: none">Download JSON</button>
     <div id="elm"></div>
+    <!-- PapaParse for CSV parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <!-- Your app's JavaScript; no defer attribute needed since this is at the end of the body -->
     <script>
-      var app = Elm.Main.init({
-        node: document.getElementById("elm"),
-      });
+      var app;
 
-      // Get the file input element
-      var fileInput = document.getElementById("fileInput");
+      // Ensure Elm is defined before initializing
+      window.onload = function () {
+        app = Elm.Main.init({
+          node: document.getElementById("elm"),
+        });
 
-      fileInput.addEventListener("change", function () {
-        var file = fileInput.files[0];
-        var reader = new FileReader();
+        var fileInput = document.getElementById("fileInput");
+        var downloadJsonBtn = document.getElementById("downloadJsonBtn");
+        var jsonData = null; // Store the JSON data
 
-        reader.onload = function (e) {
-          var csvContent = e.target.result;
-          var rows = csvContent.split(/\r\n|\n/);
-          var jsonArray = rows.map(function (row) {
-            var columns = row.split(",");
-            var obj = {};
-            columns.forEach(function (column, index) {
-              obj["field" + index] = column;
-            });
-            return obj;
+        fileInput.addEventListener("change", function () {
+          var file = fileInput.files[0];
+          var reader = new FileReader();
+
+          reader.onload = function (e) {
+            var csvContent = e.target.result;
+            // Use PapaParse to convert CSV to JSON
+            jsonData = JSON.stringify(convertCSVtoJSON(csvContent));
+            // Send the JSON string data to Elm, if you have a port set up for this
+            // app.ports.convertComplete.send(jsonData);
+            // Show the download button
+            downloadJsonBtn.style.display = "inline"; // Use inline instead of block to keep the button's original display style
+          };
+
+          reader.readAsText(file);
+        });
+
+        downloadJsonBtn.addEventListener("click", function () {
+          if (jsonData) {
+            // Trigger file download
+            downloadJson("data.json", jsonData);
+          }
+        });
+
+        // Function that prepares the data and triggers the download
+        function downloadJson(filename, text) {
+          var element = document.createElement("a");
+          element.setAttribute(
+            "href",
+            "data:text/plain;charset=utf-8," + encodeURIComponent(text)
+          );
+          element.setAttribute("download", filename);
+          document.body.appendChild(element);
+          element.click();
+          document.body.removeChild(element);
+        }
+
+        // Function to convert CSV to JSON
+        function convertCSVtoJSON(csvContent) {
+          return Papa.parse(csvContent, {
+            header: true,
+            skipEmptyLines: true,
+            dynamicTyping: true,
+            complete: function (results) {
+              jsonData = JSON.stringify(results.data);
+              // Send the JSON string data to Elm, if you have a port set up for this
+              // app.ports.convertComplete.send(jsonData);
+              // Show the download button
+              downloadJsonBtn.style.display = "inline"; // Use inline instead of block to keep the button's original display style
+            },
           });
-
-          // Send the JSON data to Elm
-          app.ports.convertComplete.send(jsonArray);
-        };
-
-        reader.readAsText(file);
-      });
-
-      app.ports.convertComplete.subscribe(function (json) {
-        // Handle JSON data here (e.g., display it or allow the user to save it)
-        console.log("Received JSON from Elm: ", json);
-      });
+        }
+      };
     </script>
   </body>
 </html>
